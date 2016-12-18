@@ -4,12 +4,14 @@
 
 const
 	program = require('commander'),
-	chalk = require('chalk'),	
+	chalk = require('chalk'),
 	rackspace = require('./lib/rackspace.js'),
 	parser = require('./lib/csv-parser.js'),
+	config = require('./lib/config.js'),
 	async = require('async'),
 	sleep = require('sleep'),
-	http = require('http');
+	http = require('http'),
+	ProgressBar = require('progress');
 
 program
 	.version('1.0.0')
@@ -24,19 +26,30 @@ let mainFunction = (accountNumber, domain, filename, options) => {
 	   process.exit(1);
 	}
 
+	// Set Config
+	config.verbose == options.verbose;
+
 	// Preambule
 	rackspace.setKeys(options.userkey, options.secretkey);
 	rackspace.setAccount(accountNumber, domain);
-	rackspace.getStats(accountNumber, domain);
+	//rackspace.getStats(accountNumber, domain);
 
 	var entries = parser.getProcessedData(filename);
 
+	var bar = new ProgressBar('  Processing :current/:total [:bar] :percent Eta: :etas', {
+    complete: '=',
+    incomplete: ' ',
+    width: 20,
+    total: entries.length
+  });
+
 	async.everyLimit(entries, 1, (item, callback) => {
-		console.log('Processing entry %s', item.Username);
+		if(config.verbose)
+			console.log('Processing entry %s', item.Username);
 
 		rackspace.getMailbox(item.Username, (mailbox) => {
 			if(mailbox.itemNotFoundFault) {
-				
+
 				// Mailbox does not exist
 
 				rackspace.createMailbox(item, () => {
@@ -44,10 +57,11 @@ let mainFunction = (accountNumber, domain, filename, options) => {
 				});
 
 			} else {
-				
-				//Mailbox already exists and we don't overwrite
 
-				console.log(chalk.gray('Mailbox %s already exists (not overwriting)'), item.Username);
+				//Mailbox already exists and we don't overwrite
+				if(config.verbose)
+					console.log(chalk.gray('  Mailbox %s already exists (not overwriting)'), item.Username);
+
 				mailbox.result = 'ignored';
 				callback(null, mailbox);
 			}
@@ -55,6 +69,7 @@ let mainFunction = (accountNumber, domain, filename, options) => {
 
 		//FIXME: found a graceful way to throttle requests
 		sleep.sleep(1);
+		bar.tick();
 	}, (err, result) => {
 		//console.log(result);
 	});
@@ -66,6 +81,7 @@ program
 	.arguments('<filename>', 'Csv source file')
 	.option('-u, --userkey <userkey>', 'User Key')
 	.option('-s, --secretkey <secretkey>', 'Secret Key')
+	.option('-v, --verbose', 'Verbose mode')
 	.action(mainFunction)
 	.parse(process.argv);
 
