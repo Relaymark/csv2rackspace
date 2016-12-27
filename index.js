@@ -37,14 +37,14 @@ let mainFunction = (accountNumber, domain, filename, options) => {
 	var entries = parser.getProcessedData(filename);
 
 	var bar = new ProgressBar('  Processing :current/:total [:bar] :percent Eta: :etas', {
-    complete: '=',
-    incomplete: ' ',
-    width: 20,
-    total: entries.length
-  });
+	    complete: '=',
+	    incomplete: ' ',
+	    width: 20,
+	    total: entries.length
+  	});
 
 	async.everyLimit(entries, 1, (item, callback) => {
-		if(config.verbose)
+		if(options.verbose)
 			console.log('Processing entry %s', item.Username);
 
 		rackspace.getMailbox(item.Username, (mailbox) => {
@@ -57,13 +57,22 @@ let mainFunction = (accountNumber, domain, filename, options) => {
 				});
 
 			} else {
-
 				//Mailbox already exists and we don't overwrite
-				if(config.verbose)
-					console.log(chalk.gray('  Mailbox %s already exists (not overwriting)'), item.Username);
 
-				mailbox.result = 'ignored';
-				callback(null, mailbox);
+				if(options.force) {
+
+					rackspace.updateMailbox(item, () => {
+						callback(null, mailbox)
+					});
+
+				} else {
+
+					if(options.verbose)
+						console.log(chalk.gray('  Mailbox %s already exists (not overwriting)'), item.Username);
+
+					mailbox.result = 'ignored';
+					callback(null, mailbox);
+				}
 			}
 		});
 
@@ -82,6 +91,7 @@ program
 	.option('-u, --userkey <userkey>', 'User Key')
 	.option('-s, --secretkey <secretkey>', 'Secret Key')
 	.option('-v, --verbose', 'Verbose mode')
+	.option('-F, --force', 'Overwrite existing mailboxes')
 	.action(mainFunction)
 	.parse(process.argv);
 
