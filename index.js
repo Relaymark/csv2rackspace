@@ -47,8 +47,21 @@ let mainFunction = (accountNumber, domain, filename, options) => {
 		if(options.verbose)
 			console.log('Processing entry %s', item.Username);
 
+
 		rackspace.getMailbox(item.Username, (mailbox) => {
-			if(mailbox.itemNotFoundFault) {
+			if(options.delete){
+				if(!mailbox){
+						rackspace.deleteMailBox(item.Username, (result) => {
+							callback(null, mailbox);
+						});
+				}
+				else {
+					console.error(item.Username +' not found');
+          callback(null, mailbox);
+        }
+			}
+			else {
+				if(mailbox.itemNotFoundFault) {
 
 				// Mailbox does not exist
 
@@ -57,21 +70,22 @@ let mainFunction = (accountNumber, domain, filename, options) => {
 				});
 
 			} else {
-				//Mailbox already exists and we don't overwrite
+					//Mailbox already exists and we don't overwrite
 
-				if(options.force) {
+					if(options.force) {
 
-					rackspace.updateMailbox(item, () => {
-						callback(null, mailbox)
-					});
+						rackspace.updateMailbox(item, () => {
+							callback(null, mailbox)
+						});
 
-				} else {
+					} else {
 
-					if(options.verbose)
-						console.log(chalk.gray('  Mailbox %s already exists (not overwriting)'), item.Username);
+						if(options.verbose)
+							console.log(chalk.gray('  Mailbox %s already exists (not overwriting)'), item.Username);
 
-					mailbox.result = 'ignored';
-					callback(null, mailbox);
+						mailbox.result = 'ignored';
+						callback(null, mailbox);
+					}
 				}
 			}
 		});
@@ -92,6 +106,7 @@ program
 	.option('-s, --secretkey <secretkey>', 'Secret Key')
 	.option('-v, --verbose', 'Verbose mode')
 	.option('-F, --force', 'Overwrite existing mailboxes')
+	.option('-d, --delete', 'Delete maibox')
 	.action(mainFunction)
 	.parse(process.argv);
 
