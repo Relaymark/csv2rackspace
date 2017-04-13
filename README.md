@@ -21,17 +21,18 @@ Example syntax (list all)
 
 ## Options
 
-    -h, --help                   output usage information
-    -V, --version                output the version number
-    -c, --csv <filename>         Csv source file
-    -u, --userkey <userkey>      User Key (required)
-    -s, --secretkey <secretkey>  Secret Key (required)
-    -c, --csv <filename>         Csv source file
-    -a, --add                    Create maiboxes, you must specify --csv <filename>
-    -d, --delete                 Delete maiboxes, you must specify --csv <filename>
-    -f, --find                   Show emails details, you must specify --csv <filename>
-    -v, --verbose                Verbose mode
-    -F, --force                  Overwrite existing mailboxes if --add is used
+    -h, --help                      output usage information
+    -V, --version                   output the version number
+    -c, --csv <filename>            Csv source file
+    -u, --userkey <userkey>         User Key (required)
+    -s, --secretkey <secretkey>     Secret Key (required)
+    -c, --csv <filename>            Csv source file
+    -a, --add                       Create maiboxes, you must specify --csv <filename>
+    -d, --delete                    Delete maiboxes, you must specify --csv <filename>
+    -f, --find                      Show emails details, you must specify --csv <filename>
+    -v, --verbose                   Verbose mode
+    -F, --force                     Overwrite existing mailboxes if --add is used
+    -m, --mark-before-year <years>  Work in list mode : add a column to mark mailbox where there is no login since x years
 
 ## Csv file format
 The csv file must be specified with the following columns seperated by commas. You must keep the following header line in your file : 

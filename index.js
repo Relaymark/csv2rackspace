@@ -11,7 +11,8 @@ const
 	async = require('async'),
 	sleep = require('sleep'),
 	http = require('http'),
-	ProgressBar = require('progress');
+	ProgressBar = require('progress'),
+	moment = require('moment');
 
 program
 	.version('2.0.0')
@@ -126,17 +127,40 @@ let mainFunction = (accountNumber, domain,  options) => {
 			if(mailboxes.total > 0) {
 				if(offset == 0){
 					console.log('There is ' + mailboxes.total + ' mailboxes :');
-					console.log('name;lastLogin;enabled;size;currentUsage;createdDate');
+					var headerLine= 'name;lastLogin;enabled;size;currentUsage;createdDate';
+					if(options.markBeforeYear > 0)
+						headerLine +=';markBeforeYear ' + options.markBeforeYear;
+					console.log(headerLine);
 
 				}
 				
 				for(var i = 0 ; i < mailboxes.rsMailboxes.length ; i++){ 
-					console.log(mailboxes.rsMailboxes[i].name + ';' 
+					var line = mailboxes.rsMailboxes[i].name + ';' 
 						+mailboxes.rsMailboxes[i].lastLogin + ';'
 						+mailboxes.rsMailboxes[i].enabled + ';'
 						+mailboxes.rsMailboxes[i].size + ';'
 						+mailboxes.rsMailboxes[i].currentUsage + ';'
-						+mailboxes.rsMailboxes[i].createdDate); 
+						+mailboxes.rsMailboxes[i].createdDate;
+
+					if(options.markBeforeYear > 0){
+						var lastLoginDate;
+						if(mailboxes.rsMailboxes[i].lastLogin){
+							lastLoginDate = moment(mailboxes.rsMailboxes[i].lastLogin, 'MM/DD/YYYY hh:mm:ss a');
+						}
+
+						var createdDate = moment(mailboxes.rsMailboxes[i].createdDate, 'MM/DD/YYYY hh:mm:ss a');
+						var shouldDeleteBeforeDate = moment().subtract(options.markBeforeYear, 'year');
+
+						var shouldDelete = 0;
+						if((!mailboxes.rsMailboxes[i].lastLogin && createdDate.isBefore(shouldDeleteBeforeDate))
+							|| (mailboxes.rsMailboxes[i].lastLogin && lastLoginDate.isBefore(shouldDeleteBeforeDate))){
+							shouldDelete = 1;
+						}
+
+						line += ';' + shouldDelete;
+					}
+
+					console.log(line); 
 				}
 			}
 			else {
@@ -158,6 +182,7 @@ program
 	.option('-f, --find', 'Show emails details, you must specify --csv <filename>')
 	.option('-v, --verbose', 'Verbose mode')
 	.option('-F, --force', 'Overwrite existing mailboxes if --add is used') 
+	.option('-m, --mark-before-year <years>', 'Work in list mode : add a column to mark mailbox where there is no login since x years', parseInt, 0)
 	.action(mainFunction)
 	.parse(process.argv);
 
