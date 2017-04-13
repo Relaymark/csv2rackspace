@@ -1,7 +1,7 @@
 {
   "name": "csv2rackspace",
-  "version": "1.0.0",
-  "description": "NodeJS tool to create multiple rackspace mailboxes from a flat csv file",
+  "version": "2.0.0",
+  "description": "NodeJS tool to create-show-delete multiple rackspace mailboxes from a flat csv file.",
   "main": "index.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"
